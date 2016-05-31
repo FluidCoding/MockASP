@@ -74,6 +74,54 @@ Sub NegativeForTrue
     MsgBox "False = " & CInt(False)     ' Prints 0
 End Sub
 
+' -- Auto Resiizng Aray
+Sub sets(byRef arr ,byVal n , byVal v)
+    If UBound(arr)<n Then
+        Redim Preserve arr(n+100)
+        arr(n) = v
+    Else 
+        arr(n) = v
+    End If
+End Sub
+
+Sub puts(byRef arr, byVal n)
+    Redim Preserve arr(UBound(arr)+1)
+    arr(UBound(arr)) = n
+End Sub
+
+Sub C(byRef str, byVal str2)
+    str = str & str2
+End Sub
+
+
+ReDim v(10)
+v(1) = 1
+v(2) = 3
+v(3) = 5
+Call sets(v,55,5)
+MsgBox "55:" & v(55) & " 1:" & v(1) & " 2:" & v(2) & " 3:" & v(3)
+
+Redim v2(5)
+v2(0) = 10
+v2(1) = 12
+v2(2) = 10
+v2(3) = 20
+v2(4) = 30
+v2(5) = 40
+Dim str
+C str , "Hi"
+C str  , " Hello"
+C str , " Hi"
+C str , " Hiya"
+MsgBox str
+
+' Would Break v2(6) = 60
+Call puts(v2,60)
+Dim iV2
+For iV2=0 To UBound(v2)
+    MsgBox "v("&iV2&"): " & v2(iV2) 
+Next
+
 '###############################################'
 ' ############### MAIN TEST ################### '
 '###############################################'
