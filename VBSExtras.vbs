@@ -89,6 +89,10 @@ Sub puts(byRef arr, byVal n)
     arr(UBound(arr)) = n
 End Sub
 
+Sub inc (byRef O)
+    O = O + 2
+End Sub
+
 Sub C(byRef str, byVal str2)
     str = str & str2
 End Sub
@@ -99,7 +103,7 @@ v(1) = 1
 v(2) = 3
 v(3) = 5
 Call sets(v,55,5)
-MsgBox "55:" & v(55) & " 1:" & v(1) & " 2:" & v(2) & " 3:" & v(3)
+'MsgBox "55:" & v(55) & " 1:" & v(1) & " 2:" & v(2) & " 3:" & v(3)
 
 Redim v2(5)
 v2(0) = 10
@@ -113,14 +117,23 @@ C str , "Hi"
 C str  , " Hello"
 C str , " Hi"
 C str , " Hiya"
-MsgBox str
+
+Dim o1(3,1)
+Dim a : a = UBound(o1,1)
+Dim b : b = UBound(o1,2)
+Dim c1 : c1 = LBound(o1,3)
+MsgBox "a " & a
+MsgBox "b " & b
+MsgBox "c1 " & c1
+MsgBox "E " & TypeName(o1(0,0))
+
 
 ' Would Break v2(6) = 60
 Call puts(v2,60)
 Dim iV2
-For iV2=0 To UBound(v2)
-    MsgBox "v("&iV2&"): " & v2(iV2) 
-Next
+' For iV2=0 To UBound(v2)
+'     MsgBox "v("&iV2&"): " & v2(iV2) 
+' Next
 
 '###############################################'
 ' ############### MAIN TEST ################### '
