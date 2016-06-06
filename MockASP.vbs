@@ -27,7 +27,34 @@ Class Mock
     
     ' - Process User Input State Parameters
     Function ProcessInput()
+        Dim line : line = ""
+        Dim vbPos : vbPos = 0
+        Dim vbNeg : vbNeg = 0
+        Dim devLimit : devLimit = 5
+        Const QStr = "Request.Querystring("""
+        Const FStr = "Request.Form("""
+        vbStr = ""
+        domStr = ""        
+        Set Parameters = CreateObject("Scripting.Dictionary")
+        Dim Key, K
         
+        ' Read File Parse QS/F/Session Keys
+        Set fSys = CreateObject("Scripting.FileSystemObject")
+        Set fHdl = fSys.OpenTextFile(filePath & fileName)
+        Do While fHdl.AtEndOfStream <> True 'AND devLimit > 1
+            line = fHdl.ReadLine
+            vbPos = InStr(1,line,QStr,1)
+            If vbPos > 0 Then
+                vbNeg = InStr(vbPos + Len(QStr), line, """", vbTextCompare)
+                K = Mid(line, vbPos, vbNeg)
+                MsgBox K
+                If Parameters.Exists(K)=False Then Parameters.add K, "Empty"
+            End If        
+        Loop
+        For Each Key in Parameters
+            Parameters(Key) = InputBox("Enter value for " & Key & ": ", "Request Builder", Parameters(Key))
+        Next
+        Parameters.add "_METHOD", Request.ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
     End Function
     
     ' Separate Frontend from backend
@@ -79,6 +106,7 @@ Class Mock
         Loop
     MsgBox "VB: " & vbStr
     MsgBox "Dom: " & domStr
+    Set fSys = Nothing : Set fHdl = Nothing
     End Function
     
     Sub WriteToFile
@@ -227,7 +255,7 @@ Dim HTML
 
 ' Wrap ASP
 Set MockASP = new Mock                          '| - Initialize a Mock ASP Object
-MockASP.SetPage("Page.ASP")
+MockASP.SetPage("Page.ASP")                     '| - Set the Working ASP File to Mock
 MockASP.ProcessInput                            '| - Process User Input State Parameters
-MockASP.LoadFile                   '| - Load the ASP File
-MockASP.WriteToFile                             '| - 
+MockASP.LoadFile                                '| - Load the ASP File(TODO: And Dependency Includes)
+MockASP.WriteToFile                             '| - Write Reulting HTML
