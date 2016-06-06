@@ -22,7 +22,7 @@ Class Mock
     
     ' - GET/POST
     Function GetActionName
-        If Parameters("_METHOD").Exists Then : GetActionName = Parameters("_METHOD") : Else : GetActionName = "None"
+        If Parameters.Exists("_METHOD") Then : GetActionName = Parameters("_METHOD") : Else : GetActionName = "None"
     End Function
     
     ' - Set the ASP Page to use
@@ -77,13 +77,20 @@ Class Mock
     ' Move Response.Writes to the Dom
     ' 
     Function LoadFile()
-        Dim line    : line = ""
-        Dim vbPos   : vbPos = 0
-        Dim vbNeg   : vbNeg = 0
-        Dim devLimit: devLimit = 5
-        Dim Action  : Action = GetActionName
-        Dim paramReplace : paramReplace = ""
-        If Action = "GET" Then : paramReplace = "Request.QueryString" : Else : paramReplace = "Request.Form"
+        Dim line            : line = ""
+        Dim vbPos           : vbPos = 0
+        Dim vbNeg           : vbNeg = 0
+        Dim vbPos2          : vbPos2 = 0
+        Dim vbNeg2          : vbNeg2 = 0
+        Dim devLimit        : devLimit = 5
+        Dim Action          : Action = GetActionName
+        Dim paramReplace    : paramReplace = ""
+        Dim ParamI          : ParamI = 0
+        Dim QStr(2) 
+            QStr(0) = "Request.Querystring("""
+            QStr(1) = "Request.Form("""
+            QStr(2) = "Session("""
+        If Action = "GET" Then : paramReplace = "Request.QueryString(""" : Else : paramReplace = "Request.Form"
         vbStr = ""
         domStr = ""
         ' Mock it
@@ -94,12 +101,31 @@ Class Mock
                             ' 1 Read Line
                             ' 2 Replace Request/Session Variables
                                 '(EmptyString or Nothing to the unset Vars)
+                                ' Go more than 1 per line deep
                             ' 3 Parse Writes
                             ' 4 Execute VBs inline 
+        Dim val : val = """"
         Do While fHdl.AtEndOfStream <> True
             line = fHdl.ReadLine
           '  MsgBox "State: " & STATE &VbCrLf &_
            '         "Line: " & line 
+           ' - Inline Replace Params
+            While ParamI < UBound(QStr)
+                If QStr(ParamI) = paramReplace Then : val = Parameters(K) : Else : val = """"
+                vbPos2 = InStr(1,line,QStr(ParamI),1)
+                If vbPos2 > 0 Then
+                    vbNeg2 = InStr(vbPos2 + Len(QStr(ParamI)), line, """", vbTextCompare)
+                    K = Mid(line, vbPos2+len(QStr(ParamI)), vbNeg2-vbPos2-len(QStr(ParamI)))
+                    If Parameters.Exists(K)=True Then
+                        line = Left(line, vbPos2-1) & """" & Parameters(K) & """" & Right(line, len(line) - vbNeg2-1)
+                        'MsgBox line
+                    End If
+                End If
+                ParamI = ParamI + 1
+            Wend
+            ParamI = 0
+           
+           ' - Parse 
             If STATE = HTML Then
                 vbPos = InStr(line, "<%")
                 If vbPos > 0 Then  ' Theres an open VB Tag to parse...TODO: ensure the surrounding html is grabbed to domStr
