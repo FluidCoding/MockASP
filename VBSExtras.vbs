@@ -118,23 +118,45 @@ C str  , " Hello"
 C str , " Hi"
 C str , " Hiya"
 
-Dim o1(3,1)
-Dim a : a = UBound(o1,1)
-Dim b : b = UBound(o1,2)
-Dim c1 : c1 = LBound(o1,3)
-MsgBox "a " & a
-MsgBox "b " & b
-MsgBox "c1 " & c1
-MsgBox "E " & TypeName(o1(0,0))
+' Dim o1(3,1)
+' Dim a : a = UBound(o1,1)
+' Dim b : b = UBound(o1,2)
+' Dim c1 : c1 = LBound(o1,3)
+' MsgBox "a " & a
+' MsgBox "b " & b
+' MsgBox "c1 " & c1
+' MsgBox "E " & TypeName(o1(0,0))
 
 
 ' Would Break v2(6) = 60
-Call puts(v2,60)
+' Call puts(v2,60)
 Dim iV2
 ' For iV2=0 To UBound(v2)
 '     MsgBox "v("&iV2&"): " & v2(iV2) 
 ' Next
 
+Function ToMethodVal(V)
+    If V=vbYes Then : ToMethodVal="GET" : Else : ToMethodVal="POST"
+End Function
+
+Dim Requests : Set Requests = CreateObject("Scripting.Dictionary")
+Dim Key
+Requests.add "username", "Empty"
+Requests.add "age", "Empty"
+Requests.add "x", "Empty"
+Requests.add "y", "Empty"
+For Each Key in Requests
+    Requests(Key) = InputBox("Enter value for " & Key & ": ", "Request Builder", Requests(Key))
+Next
+Requests.add "_METHOD", ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
+' Print That Back
+Dim reqStr : reqStr = "" 
+For Each Key in Requests
+    reqStr = reqStr & "[" & Key & " := " & Requests(Key) & "]" & vbCrLf
+Next
+MsgBox reqStr, " Request Parameters "
 '###############################################'
 ' ############### MAIN TEST ################### '
 '###############################################'
+
+

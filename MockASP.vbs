@@ -6,7 +6,8 @@ Class Mock
     Private domStr
     Private vbStr
     Private filePath
-
+    Private Parameters
+    Private fileName
     'Constructor
     Private Sub Class_Initialize( )
         HTML = 0
@@ -19,12 +20,21 @@ Class Mock
         'On Nothingd
     End Sub
     
-    '
+    ' - Set the ASP Page to use
+    Function SetPage(fn)
+        fileName = fn
+    End Function
+    
+    ' - Process User Input State Parameters
+    Function ProcessInput()
+        
+    End Function
+    
     ' Separate Frontend from backend
     ' Insert variables into inline <%={var}%>
     ' Move Response.Writes to the Dom
     ' 
-    Function LoadFile(fileName)
+    Function LoadFile()
         Dim line : line = ""
         Dim vbPos : vbPos = 0
         Dim vbNeg : vbNeg = 0
@@ -86,7 +96,10 @@ Class Mock
         Set fSys = Nothing
     End Sub
 End Class
+' - 
 
+
+' -
 Class ResponseMock
     Private fileName
     Private filePath
@@ -154,13 +167,39 @@ Class Request
 
         'body
     End Function
+    
+        Private Requests
+    Function ToMethodVal(V)
+        If V=vbYes Then : ToMethodVal="GET" : Else : ToMethodVal="POST"
+    End Function
+    
+    Function GetParameters(Ps, P)
+        Set Requests = CreateObject("Scripting.Dictionary")
+        Dim Key, K
+        ' Santitize Fill into Dictionary
+        For Each K IN Ps
+            If Requests.Exists(K)=False Then Requests.add K, "Empty"
+        Next
+
+        For Each Key in Requests
+            Requests(Key) = InputBox("Enter value for " & Key & ": ", "Request Builder", Requests(Key))
+        Next
+        Requests.add "_METHOD", ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
+        ' Print That Back
+        Dim reqStr : reqStr = "" 
+        For Each Key in Requests
+            reqStr = reqStr & "[" & Key & " := " & Requests(Key) & "]" & vbCrLf
+        Next
+        MsgBox reqStr, " Request Parameters "
+        Set P = Requests
+        GetParameters = reqStr
+    End Function
 End Class
 
 ' ----- END Request CLASS -----'
 MsgBox " Mocking..."
 Set Response = new ResponseMock
 ' Play Data '
-' TODO: Load via asp File'
 Dim HTML
  HTML = "<!DOCTYPE html>" & VbCrLf &_
     "<html>" & VbCrLf &_
@@ -170,11 +209,25 @@ Dim HTML
         "<body>MokMokMok</body>" & VbCrLf &_
     "</html>"
 
-' The Action'
+' Sample Action'
 'Response.Write HTML
 'Response.Mock
+' ======================================================'
+' ======================== MAIN ========================'
+' ======================================================'
+' Processing Steps: 
+            ' 1 Load ASP File
+            ' 2 Read Through For Form/QueryString/Session Variables Expected
+            ' 3 Prompt User For values or use file(save to file after prompt for next time)
+            ' 4 Parse File Replace Input Params with last steps
+            ' 5 Get Mock DB Input
+            ' Generate HTML+Execute VB
+            ' Write HTML
+            ' OPEN in Browser
 
 ' Wrap ASP
-Set MockASP = new Mock
-MockASP.LoadFile("Page.ASP")
-MockASP.WriteToFile
+Set MockASP = new Mock                          '| - Initialize a Mock ASP Object
+MockASP.SetPage("Page.ASP")
+MockASP.ProcessInput                            '| - Process User Input State Parameters
+MockASP.LoadFile                   '| - Load the ASP File
+MockASP.WriteToFile                             '| - 
