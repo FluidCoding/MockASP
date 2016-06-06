@@ -20,6 +20,11 @@ Class Mock
         'On Nothingd
     End Sub
     
+    ' - GET/POST
+    Function GetActionName
+        If Parameters("_METHOD").Exists Then : GetActionName = Parameters("_METHOD") : Else : GetActionName = "None"
+    End Function
+    
     ' - Set the ASP Page to use
     Function SetPage(fn)
         fileName = fn
@@ -32,11 +37,11 @@ Class Mock
     
     ' - Process User Input State Parameters
     Function ProcessInput()
-        Dim line : line = ""
-        Dim vbPos : vbPos = 0
-        Dim vbNeg : vbNeg = 0
+        Dim line    : line = ""
+        Dim vbPos   : vbPos = 0
+        Dim vbNeg   : vbNeg = 0
         Dim devLimit : devLimit = 5
-        Dim ParamI : ParamI = 0
+        Dim ParamI  : ParamI = 0
         Dim QStr(2) 
             QStr(0) = "Request.Querystring("""
             QStr(1) = "Request.Form("""
@@ -48,9 +53,9 @@ Class Mock
         ' Read File Parse QS/F/Session Keys
         Set fSys = CreateObject("Scripting.FileSystemObject")
         Set fHdl = fSys.OpenTextFile(filePath & fileName)
-        Do While fHdl.AtEndOfStream <> True 'AND devLimit > 1
+        Do While fHdl.AtEndOfStream <> True
             line = fHdl.ReadLine
-            While ParamI < UBound(QStr)-1
+            While ParamI < UBound(QStr)
                 vbPos = InStr(1,line,QStr(ParamI),1)
                 If vbPos > 0 Then
                     vbNeg = InStr(vbPos + Len(QStr(ParamI)), line, """", vbTextCompare)
@@ -72,16 +77,26 @@ Class Mock
     ' Move Response.Writes to the Dom
     ' 
     Function LoadFile()
-        Dim line : line = ""
-        Dim vbPos : vbPos = 0
-        Dim vbNeg : vbNeg = 0
-        Dim devLimit : devLimit = 5
+        Dim line    : line = ""
+        Dim vbPos   : vbPos = 0
+        Dim vbNeg   : vbNeg = 0
+        Dim devLimit: devLimit = 5
+        Dim Action  : Action = GetActionName
+        Dim paramReplace : paramReplace = ""
+        If Action = "GET" Then : paramReplace = "Request.QueryString" : Else : paramReplace = "Request.Form"
         vbStr = ""
         domStr = ""
         ' Mock it
         Set fSys = CreateObject("Scripting.FileSystemObject")
         Set fHdl = fSys.OpenTextFile(filePath & fileName)
-        Do While fHdl.AtEndOfStream <> True 'AND devLimit > 1
+        
+        ' Processing Steps: 
+                            ' 1 Read Line
+                            ' 2 Replace Request/Session Variables
+                                '(EmptyString or Nothing to the unset Vars)
+                            ' 3 Parse Writes
+                            ' 4 Execute VBs inline 
+        Do While fHdl.AtEndOfStream <> True
             line = fHdl.ReadLine
           '  MsgBox "State: " & STATE &VbCrLf &_
            '         "Line: " & line 
