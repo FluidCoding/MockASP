@@ -255,8 +255,8 @@ Dim HTML
 ' ======================================================'
 ' Processing Steps: 
             ' [x] 1 Load ASP File
-            ' [] 2 Read Through For Form/QueryString/Session Variables Expected
-            ' [] 3 Prompt User For values or use file(save to file after prompt for next time)
+            ' [x] 2 Read Through For Form/QueryString/Session Variables Expected
+            ' [x] 3 Prompt User For values or use file(save to file after prompt for next time)
             ' [] 4 Parse File Replace Input Params with last steps
             ' [] 5 Get Mock DB Input
             ' [] 6 Generate HTML+Execute VB
