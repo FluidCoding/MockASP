@@ -25,36 +25,46 @@ Class Mock
         fileName = fn
     End Function
     
+    ' - Get Useable Value From User, For Form Action
+    Function ToMethodVal(V)
+        If V=vbYes Then : ToMethodVal="GET" : Else : ToMethodVal="POST"
+    End Function
+    
     ' - Process User Input State Parameters
     Function ProcessInput()
         Dim line : line = ""
         Dim vbPos : vbPos = 0
         Dim vbNeg : vbNeg = 0
         Dim devLimit : devLimit = 5
-        Const QStr = "Request.Querystring("""
-        Const FStr = "Request.Form("""
+        Dim ParamI : ParamI = 0
+        Dim QStr(2) 
+            QStr(0) = "Request.Querystring("""
+            QStr(1) = "Request.Form("""
+            QStr(2) = "Session("""
         vbStr = ""
         domStr = ""        
         Set Parameters = CreateObject("Scripting.Dictionary")
         Dim Key, K
-        
         ' Read File Parse QS/F/Session Keys
         Set fSys = CreateObject("Scripting.FileSystemObject")
         Set fHdl = fSys.OpenTextFile(filePath & fileName)
         Do While fHdl.AtEndOfStream <> True 'AND devLimit > 1
             line = fHdl.ReadLine
-            vbPos = InStr(1,line,QStr,1)
-            If vbPos > 0 Then
-                vbNeg = InStr(vbPos + Len(QStr), line, """", vbTextCompare)
-                K = Mid(line, vbPos, vbNeg)
-                MsgBox K
-                If Parameters.Exists(K)=False Then Parameters.add K, "Empty"
-            End If        
+            While ParamI < UBound(QStr)-1
+                vbPos = InStr(1,line,QStr(ParamI),1)
+                If vbPos > 0 Then
+                    vbNeg = InStr(vbPos + Len(QStr(ParamI)), line, """", vbTextCompare)
+                    K = Mid(line, vbPos+len(QStr(ParamI)), vbNeg-vbPos-len(QStr(ParamI)))
+                    If Parameters.Exists(K)=False Then Parameters.add K, "Empty"
+                End If
+                ParamI = ParamI + 1
+            Wend
+            ParamI = 0
         Loop
         For Each Key in Parameters
             Parameters(Key) = InputBox("Enter value for " & Key & ": ", "Request Builder", Parameters(Key))
         Next
-        Parameters.add "_METHOD", Request.ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
+        Parameters.add "_METHOD", ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
     End Function
     
     ' Separate Frontend from backend
@@ -244,14 +254,14 @@ Dim HTML
 ' ======================== MAIN ========================'
 ' ======================================================'
 ' Processing Steps: 
-            ' 1 Load ASP File
-            ' 2 Read Through For Form/QueryString/Session Variables Expected
-            ' 3 Prompt User For values or use file(save to file after prompt for next time)
-            ' 4 Parse File Replace Input Params with last steps
-            ' 5 Get Mock DB Input
-            ' Generate HTML+Execute VB
-            ' Write HTML
-            ' OPEN in Browser
+            ' [x] 1 Load ASP File
+            ' [] 2 Read Through For Form/QueryString/Session Variables Expected
+            ' [] 3 Prompt User For values or use file(save to file after prompt for next time)
+            ' [] 4 Parse File Replace Input Params with last steps
+            ' [] 5 Get Mock DB Input
+            ' [] 6 Generate HTML+Execute VB
+            ' [x] 7 Write HTML
+            ' [x] 8 OPEN in Browser
 
 ' Wrap ASP
 Set MockASP = new Mock                          '| - Initialize a Mock ASP Object
@@ -259,3 +269,4 @@ MockASP.SetPage("Page.ASP")                     '| - Set the Working ASP File to
 MockASP.ProcessInput                            '| - Process User Input State Parameters
 MockASP.LoadFile                                '| - Load the ASP File(TODO: And Dependency Includes)
 MockASP.WriteToFile                             '| - Write Reulting HTML
+
