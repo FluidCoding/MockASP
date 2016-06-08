@@ -8,12 +8,14 @@ Class Mock
     Private filePath
     Private Parameters
     Private fileName
+    Private inputRequest
     'Constructor
     Private Sub Class_Initialize( )
         HTML = 0
         VB = 1
         STATE = HTML
         filePath = "C:\Users\User\My Coding\MockASP\"
+        inputRequest = 0
     End Sub
 
     Private Sub Class_Terminate(  )
@@ -35,6 +37,52 @@ Class Mock
         If V=vbYes Then : ToMethodVal="GET" : Else : ToMethodVal="POST"
     End Function
     
+    ' - Gather User Input As Web Form ("WEB"|"MSG"|Default:Execution Params)
+    Function InitRequest(method)
+        Dim Key, fSys, fStr
+        Select Case method
+            Case "WEB"  ' - Write a WebPage to gather the values into a request db file
+                Dim HTML, reqFileName
+                reqFileName = filePath & Replace(fileName, ".", "_") & "_Request.html"
+                HTML = "<!DOCTYPE html>" & VbCrLf &_
+                    "<html>" & VbCrLf &_
+                        "<head>" & VbCrLf &_
+                        "<title>Request Parameters Builder</title>" & VbCrLf &_
+                        "<style>"  & "div{display:block;}" & VbCrLf &_
+                        "</style></head>"  & VbCrLf &_
+                        "<body>"
+                    For Each Key In Parameters
+                        HTML =HTML& "<div><label for=""" & Key & """ >"&Key&"</label><input type=""text"" name="""& Key & """ ></div>"  
+                    Next
+                HTML = HTML& "<label for""method"">Method: </label><input type=""radio"" name=""method"" value=""get"">GET</input><input type=""radio"" name=""method"" value=""post"" >POST</input>" &_
+                            "<input type=""submit"" name=""submit"">Submit</input>"
+                HTML =HTML& "</body>" & VbCrLf &_
+                    "</html>"
+                Set fSys = CreateObject("Scripting.FileSystemObject")
+                Set fStr = fSys.CreateTextFile(reqFileName, 2)
+                    fStr.Write HTML
+                fStr.Close
+                Set fStr = Nothing
+                Set fSys = Nothing
+
+                'Open It
+                MsgBox reqFileName
+                CreateObject("WScript.Shell").Run Chr(34) & reqFileName & Chr(34)
+
+                ' Block for user input/save
+                while inputRequest <> vbYes
+                    inputRequest = MsgBox("Please fill out the form on "& fileName& "_Request.html, Then Press Yes to continue", vbYesNo)
+                WEnd
+            Case "MSG"
+                For Each Key in Parameters
+                    Parameters(Key) = InputBox("Enter value for " & Key & ": ", "Request Builder", Parameters(Key))
+                Next
+                Parameters.add "_METHOD", ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
+            Case Else
+
+        End Select
+    End Function 
+
     ' - Process User Input State Parameters
     Function ProcessInput()
         Dim line    : line = ""
@@ -66,10 +114,7 @@ Class Mock
             Wend
             ParamI = 0
         Loop
-        For Each Key in Parameters
-            Parameters(Key) = InputBox("Enter value for " & Key & ": ", "Request Builder", Parameters(Key))
-        Next
-        Parameters.add "_METHOD", ToMethodVal(MsgBox("IS METHOD TYPE GET(Yes) OR POST(No): ", vbYesNo))
+
     End Function
     
     ' Separate Frontend from backend
@@ -77,6 +122,10 @@ Class Mock
     ' Move Response.Writes to the Dom
     ' 
     Function LoadFile()
+    Dim inputFlag
+    If inputRequest=0 Then
+
+    End If
         Dim line            : line = ""
         Dim vbPos           : vbPos = 0
         Dim vbNeg           : vbNeg = 0
@@ -113,7 +162,7 @@ Class Mock
             While ParamI < UBound(QStr)
                 If QStr(ParamI) = paramReplace Then : val = Parameters(K) : Else : val = """"
                 vbPos2 = InStr(1,line,QStr(ParamI),1)
-                If vbPos2 > 0 Then
+                If vbPos2>0 Then
                     vbNeg2 = InStr(vbPos2 + Len(QStr(ParamI)), line, """", vbTextCompare)
                     K = Mid(line, vbPos2+len(QStr(ParamI)), vbNeg2-vbPos2-len(QStr(ParamI)))
                     If Parameters.Exists(K)=True Then
@@ -124,7 +173,7 @@ Class Mock
                 ParamI = ParamI + 1
             Wend
             ParamI = 0
-           
+
            ' - Parse 
             If STATE = HTML Then
                 vbPos = InStr(line, "<%")
@@ -175,7 +224,7 @@ Class Mock
         Set fSys = Nothing
     End Sub
 End Class
-' - 
+' --==============END Mock Class==============-- 
 
 
 ' -
@@ -279,14 +328,7 @@ End Class
 MsgBox " Mocking..."
 Set Response = new ResponseMock
 ' Play Data '
-Dim HTML
- HTML = "<!DOCTYPE html>" & VbCrLf &_
-    "<html>" & VbCrLf &_
-        "<head>" & VbCrLf &_
-        "<title>test</title>" & VbCrLf &_
-        "</head>"  & VbCrLf &_
-        "<body>MokMokMok</body>" & VbCrLf &_
-    "</html>"
+
 
 ' Sample Action'
 'Response.Write HTML
@@ -307,7 +349,8 @@ Dim HTML
 ' Wrap ASP
 Set MockASP = new Mock                          '| - Initialize a Mock ASP Object
 MockASP.SetPage("Page.ASP")                     '| - Set the Working ASP File to Mock
-MockASP.ProcessInput                            '| - Process User Input State Parameters
+MockASP.ProcessInput                            '| - Process ASP State Parameters
+MockASP.initRequest("WEB")                      '| - Gather User Input As Web Form ("WEB"|"MSG"|Default:Execution Params)
 MockASP.LoadFile                                '| - Load the ASP File(TODO: And Dependency Includes)
 MockASP.WriteToFile                             '| - Write Reulting HTML
 
