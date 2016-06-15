@@ -9,6 +9,7 @@ Class Mock
     Private Parameters
     Private fileName
     Private inputRequest
+    Private ErrCount
     'Constructor
     Private Sub Class_Initialize( )
         HTML = 0
@@ -16,6 +17,7 @@ Class Mock
         STATE = HTML
         filePath = "C:\Users\User\My Coding\MockASP\"
         inputRequest = 0
+        ErrCount = 0
     End Sub
 
     Private Sub Class_Terminate(  )
@@ -70,8 +72,8 @@ Class Mock
                 CreateObject("WScript.Shell").Run Chr(34) & reqFileName & Chr(34)
 
                 ' Block for user input/save
-                while inputRequest <> vbYes
-                    inputRequest = MsgBox("Please fill out the form on "& fileName& "_Request.html, Then Press Yes to continue", vbYesNo)
+                while inputRequest <> vbYes 
+                    inputRequest = MsgBox("Please fill out the form on "& fileName& "_Request.html, Then Press Yes to continue when done", vbYesNo)
                 WEnd
             Case "MSG"
                 For Each Key in Parameters
@@ -154,6 +156,7 @@ Class Mock
                             ' 3 Parse Writes
                             ' 4 Execute VBs inline 
         Dim val : val = """"
+        Dim tmpLine : tmpLine = ""
         Do While fHdl.AtEndOfStream <> True
             line = fHdl.ReadLine
           '  MsgBox "State: " & STATE &VbCrLf &_
@@ -176,17 +179,22 @@ Class Mock
 
            ' - Parse 
             If STATE = HTML Then
+                
                 vbPos = InStr(line, "<%")
                 If vbPos > 0 Then  ' Theres an open VB Tag to parse...TODO: ensure the surrounding html is grabbed to domStr
                     STATE = VB
                     vbNeg = InStr(line, "%>")-3
                     If vbNeg > 0 Then  ' The Script tag was closed
                        ' MsgBox "44 vbNeg: " & vbNeg & " vbPos: " & vbPos
-                        vbStr = vbStr & Mid(line, vbPos+2, Len(line) - (Len(line)-vbNeg)) & VbCrLf
+                        tmpLine = Mid(line, vbPos+2, Len(line) - (Len(line)-vbNeg)) & VbCrLf
+                        vbStr = vbStr & tmpLine
+                        ExecASP tmpLine 
                         STATE = HTML
                     Else 
                        ' MsgBox "48 vbNeg: " & vbNeg & " vbPos: " & vbPos
-                        vbStr = vbStr & Right(line, Len(line)-vbPos+2) & VbCrLf
+                        tmpLine = Right(line, Len(line)-vbPos+2) & VbCrLf
+                        vbStr = vbStr & tmpLine
+                        ExecASP tmpLine 
                     End If
                 Else
                     domStr = domStr & line & VbCrLf
@@ -196,10 +204,14 @@ Class Mock
                 If vbPos > 0 Then
                    ' MsgBox "57 vbNeg: " & vbNeg & " vbPos: " & vbPos
                     STATE = HTML
-                    vbStr = vbStr & Right(line, Len(line)-vbPos) & VbCrLf
+                    tmpLine = Right(line, Len(line)-vbPos-1) & VbCrLf
+                    vbStr = vbStr & tmpLine
+                    ExecASP tmpLine 
                 Else
                     vbStr = vbStr & line & VbCrLf
+                    ExecASP line 
                 End If
+
                 
             End If
             devLimit = devLimit-1
@@ -207,6 +219,35 @@ Class Mock
     MsgBox "VB: " & vbStr
     MsgBox "Dom: " & domStr
     Set fSys = Nothing : Set fHdl = Nothing
+    MsgBox "Err Count: " & ErrCount
+    End Function
+
+    Function ExecASP(code)
+        Dim safe : safe = True
+        Dim loud : loud = True 
+        Dim excludes : excludes = Array(".MOVENEXT", ".CLOSE", ".OPEN", ".EOF",".GETROWS",".RECORDCOUNT")
+        If InStr(code, "<%")>0 Then 
+            safe = False : loud = False
+        ElseIf InStr(code, "%")>0 Then 
+            safe = False : loud = False 
+        End If
+
+        For Each iter In excludes
+            If InStr(UCASE(code), iter)>0 Then
+                safe = False : loud = False  
+            End If
+        Next
+
+        On Error Resume Next
+        If safe Then 
+            Execute code
+        If Err.Number <> 0 Then
+            ErrCount = ErrCount+1
+            If ErrCount Mod 22 = 0 THen MsgBox code & Err.Number & " Srce: " & Err.Source & " Desc: " &  Err.Description
+            Err.Clear
+        End If
+        ElseIF loud Then : MsgBox "Failed: " & code 
+        End If
     End Function
     
     Sub WriteToFile
@@ -292,7 +333,7 @@ Class Request
     End Function
 ' - Mock Form INPUT/Reading'
     Function Form(key)
-
+        
         'body
     End Function
     
