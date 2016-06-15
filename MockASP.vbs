@@ -122,6 +122,7 @@ Class Mock
     ' Separate Frontend from backend
     ' Insert variables into inline <%={var}%>
     ' Move Response.Writes to the Dom
+    ' TODO: Read all VBS from file and do some currying on functions,subs,vars
     ' 
     Function LoadFile()
     Dim inputFlag
